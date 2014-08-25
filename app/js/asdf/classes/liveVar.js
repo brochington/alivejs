@@ -30,15 +30,14 @@ define([
 
 			Object.defineProperty(ns, Varname, {
 				get: function(){
-					// console.log('liveVar GET');
-					// console.log(Varname);
+					// console.log('liveVar GET', Varname);
 					// console.log(liveVarValues);
 					if(liveVarValues[Varname]){
 						return liveVarValues[Varname].value;	
 					}
 				},
 				set: function(val){
-					// console.log('liveVAR SET');
+					// console.log('liveVAR SET', Varname);
 					liveVarValues[Varname].value = val;
 				}
 			});
@@ -82,9 +81,14 @@ define([
 					return self.internal.asdfReturnFunc;
 				},
 				set: function(val){
+					// console.log("value set", this);
+					// console.dir(val);
+
 					this.internal.tempSetVal = val;
 
 					var valType = determineType(val);
+
+					// console.log('valType', valType);
 
 					// handle type usecases here. 
 					if(valType == 'asdfPrimitive'){
@@ -93,7 +97,7 @@ define([
 					};
 
 					if(valType == 'asdfFunction'){
-						// console.log('val is asdf function');
+						console.log('val is asdf function');
 						this.handleAsdfFunction();
 					};
 
@@ -114,10 +118,9 @@ define([
 		LiveVar.prototype.updateLiveVars = function(){
 			console.log('proto updateLiveVars');
 			console.dir(this);
-			// console.log(passedValue);
 
 			if(this.internal.asdfReturnFunc.asdfType == 'asdfPrimitive'){
-				// console.log('updateLiveVars asdfPrimitive');
+				console.log('updateLiveVars asdfPrimitive');
 			}
 
 			if(this.internal.asdfReturnFunc.asdfType == 'asdfFunction'){
@@ -149,7 +152,6 @@ define([
 
 			// this is the magic function!
 			tempFunc = function(){
-
 				return self.internal.value;
 			};	
 
@@ -161,6 +163,7 @@ define([
 
 			// If value is a function, 
 			if(dataValType == 'Function'){
+				console.log('dataValType is function!');
 				tempFunc.asdfType = 'asdfFunction';
 				this.initAsdfFunction();
 			};
@@ -221,9 +224,9 @@ define([
 			console.log('handleAsdfFunction');
 
 		};
-
+		// asdfPrimitive means that it is coming from a liveVar, and should subscribe...
 		LiveVar.prototype.handleAsdfPrimitive = function(){
-			console.log('handleAsdfPrimitive');
+			// console.log('handleAsdfPrimitive');
 			var val = this.internal.tempSetVal;
 
 			this.internal.value = val.asdfHome.internal.value;

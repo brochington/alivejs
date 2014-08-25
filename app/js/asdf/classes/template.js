@@ -47,7 +47,7 @@ define([
 
 		
 
-		console.log(this.__internal__.tplNodeArr);
+		// console.log(this.__internal__.tplNodeArr);
 
 	};
 

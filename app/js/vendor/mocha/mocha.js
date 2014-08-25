@@ -1,7 +1,6 @@
 
 ;(function(){
 // CommonJS require()
-console.log('inside mocha....');
 function require(p){
     var path = require.resolve(p)
       , mod = require.modules[path];
