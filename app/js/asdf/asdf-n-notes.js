@@ -131,5 +131,84 @@ d.my_container.bindings({
 /* TODO: 
 	- scan templates when they are "gotten" so that the classes and ids are added to the d object.
 	- handle both ids and classes.
+*/
+
+- No logic in the template!
+
+// setting up info for d.someNode...
+// get is an internal DomNode, set is something else....
+
+// setting a property...
+d.someNode.backgroundColor = 'blue';
+// binding a liveVar to a dom style prop.
+d.someNode.height = a.someHeight;
+// 
+
+/*******************************************************************************************************/
+// sample todoApp...
+
+
+
+function List(data){
+	var self = this;
+
+	this.listItems = [];
+
+	data.listItems.forEach(function (v, i, arr){
+		self.listItems.push(new ListItem(v));
+	});
+};
+
+List.prototype.addListItem = function(data){
+	this.listItems.push(new ListItem(data));
+};
+
+function ListItem(data){
+	var self = this;
+
+	this.text = data.text;
+	this.isChecked = data.isChecked;
+};
+
+a.liveVar('list', new List(data));
+
+// d.list is where the list will be placed in the dom
+d.list = {
+	template: a.someTemplateName, // what template will be used for content in d.list
+	data: a.list, // data to use in rendering of template 
+	forEach: {
+		data: a.list.listItems,
+		template: t.list_item,
+		insert: d.list_items
+	},
+	onClick: {
+		add: 
+	}
+};
+
+d.list_item = {
+	template: self.template,
+	data: self // this could be implied.
+};
+
+ = d.list.onClick;
+
+
+
+// template for list...
+<script id="list" type="text/asdf-template">
+	<button class="add">
+	<div class="list_items"></div>
+</script>
+
+<script id="list_item" type="text/asdf-template">
+    <span>${text}</span>
+    <input type="checkbox" value="${isChecked}"><>
+</script>
+
+// template for listItem.....
+
+
+
 
 

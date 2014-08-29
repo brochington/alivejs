@@ -8,11 +8,9 @@ define([
 	var testsObj = {
 		runTests: function(args){
 			'use strict';
-			console.log('running tests...');
-			console.dir(asdf);
 
 			// Setup global variables for tests
-			var a = asdf.LiveVar;
+			var a = asdf.livePropertyObject;
 
 		    describe('ASDF Dom properties', function () {
 		        describe('creation of dom properties', function () {
@@ -27,14 +25,14 @@ define([
 		    describe('ASDF LiveVar tests', function () {
 		    	describe('creation of alive variables', function(){
 		        	it('creates an alive variable', function(){
-		        			a.live('testVar1', 'Hello');
+		        			a.liveVar('testVar1', 'Hello');
 		        			a.testVar1.should.exist;
 		        			a.testVar1().should.equal('Hello');
 		        	});
 		        });
 		        describe('reassignment of value stored in live variable', function(){
 		        	it('create and reassign a value in a live variable', function(){
-		        		a.live('testVar2', "Hello");
+		        		a.liveVar('testVar2', "Hello");
 		        		a.testVar2.should.exist;
 		        		a.testVar2 = "there";
 		        		a.testVar2().should.equal('there');
@@ -43,8 +41,8 @@ define([
 		        describe('assignment of one liveVar to another', function () {
 		        	describe('', function () {
 		        		it('liveVar 3 value is set to value of liveVar 4', function () {
-		        			a.live('testVar3', "test value 3");
-		        			a.live('testVar4', 'test value 4');
+		        			a.liveVar('testVar3', "test value 3");
+		        			a.liveVar('testVar4', 'test value 4');
 
 		        			a.testVar3.should.exist;
 		        			a.testVar4.should.exist;
@@ -59,8 +57,8 @@ define([
 		        describe('Binding of liveVars to other liveVars', function(){
 		        	describe('', function () {
 		        		it('value of liveVar is bound to another liveVar', function(){
-		        			a.live('testVar5', "test value 5");
-		        			a.live('testVar6', 'test value 6');
+		        			a.liveVar('testVar5', "test value 5");
+		        			a.liveVar('testVar6', 'test value 6');
 
 		        			a.testVar5 = a.testVar6;
 		        			a.testVar6 = "new test value";
@@ -69,29 +67,49 @@ define([
 		        		});
 		        	});
 		        });
-		        describe('creation of live variable that is a function', function () {
+		        describe('Creating a variable that is a function', function () {
 		        	describe('', function () {
-		        		it('creates a live variable that is a function', function () {
-		        			a.live('liveVarFunction1', function(){
-		        				return 'this is the contents of the liveVarFunction1';
+		        		it('create a variable that is a function', function () {
+		        			a.liveVar('testVar7', function(){
+		        				return 'this is a value of testVar7';
 		        			});
 
-		        			var tempFunc = a.liveVarFunction1();
-		        			console.dir(a.liveVarFunction1);
-		        			console.log(tempFunc);
-		        			tempFunc().should.equal('this is the contents of the liveVarFunction1');
-		        			console.log(tempFunc);
-		        			// var tempVal = tempFunc();
+		        			var temp = a.testVar7();
 
-		        			// console.log(tempVal);
-
-		        			// tempVal.should.equal('this is the contents of the liveVarFunction1');
-		        			// });
+		        			temp().should.equal('this is a value of testVar7');
 		        		});
 		        	});
 		        });
 		    });
+			describe('ASDF liveFunc tests', function () {
+				describe('creation of a live function', function () {
+					describe('', function () {
+		        		it('creates a live function', function () {
+		        			a.liveFunc('liveFunction1', function(){
+		        				return 'this is the contents of the liveVarFunction1';
+		        			});
+
+		        			a.liveFunction1.should.exist;
+		        		});
+		        	});
+				});
+				describe('proper return value from liveFunc', function () {
+					describe('', function () {
+						it('liveFunc returns proper value', function () {
+							a.liveFunc('liveFunction2', function(){
+								var internalValue = 1 + 2;
+								console.log("running test liveVarFunction2");
+
+								return internalValue;
+							});
+
+							a.liveFunction2().should.equal(3);
+							// console.log(a.liveFunction2();
+						});
+					});
+				});
+			});
 		}
 	};
 	return testsObj;
-})
+});

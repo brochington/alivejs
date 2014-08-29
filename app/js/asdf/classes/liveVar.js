@@ -1,22 +1,21 @@
 define([
 	'lodash',
 	'asdf/classes/pubsub',
+	'asdf/classes/livePropertyObject',
 	'asdf/classes/dom',
-	], function (_, ps, dom){
+	], function (_, ps, lpo, dom){
 
-		var ns = {},
-			liveVarValues = {},
+		var liveVarValues = {},
 			monitorLiveVars = false,
 			liveVarMonitorArr = [],
 			typeArr = ['Undefined','String','Number','Boolean','Function',
 						'Array','Date','Null','Object','Null','NaN'];
 
-		// to temp expose liveVarValues:
-		ns.liveVarValues = liveVarValues; 
+		// to temp expose liveVarValues and liveFuncValues:
+		lpo.liveVarValues = liveVarValues; 
 
 		// Creates a new liveVar property and variable. 
-		ns.live = function(Varname, initValue, initArgVals, initContext){
-
+		lpo.liveVar = function(Varname, initValue, initArgVals, initContext){
 
 			Object.defineProperty(liveVarValues, Varname, {
 				value: new LiveVar({
@@ -26,23 +25,25 @@ define([
 					initArgVals: initArgVals || null,
 					initContext: initContext || window
 				})
-			});			
-
-			Object.defineProperty(ns, Varname, {
-				get: function(){
-					// console.log('liveVar GET', Varname);
-					// console.log(liveVarValues);
-					if(liveVarValues[Varname]){
-						return liveVarValues[Varname].value;	
-					}
-				},
-				set: function(val){
-					// console.log('liveVAR SET', Varname);
-					liveVarValues[Varname].value = val;
-				}
 			});
 
-
+			// make sure that the property wasn't already created by something else
+			// like a liveFunc.
+			if(!lpo[Varname]){
+				Object.defineProperty(lpo, Varname, {
+					get: function(){
+						// console.log('liveVar GET', Varname);
+						// console.log(liveVarValues);
+						if(liveVarValues[Varname]){
+							return liveVarValues[Varname].value;	
+						}
+					},
+					set: function(val){
+						// console.log('liveVAR SET', Varname);
+						liveVarValues[Varname].value = val;
+					}
+				});
+			}				
 		};
 		// liveVar class 
 		function LiveVar(data) {
@@ -70,7 +71,6 @@ define([
 
 			Object.defineProperty(this, 'value', {
 				get: function(){
-					// console.log('get value');
 					
 					// if monitorLiveVar flag is set, add ref to that liveVar in arr.
 					if(monitorLiveVars){
@@ -116,11 +116,11 @@ define([
 		};
 
 		LiveVar.prototype.updateLiveVars = function(){
-			console.log('proto updateLiveVars');
-			console.dir(this);
+			// console.log('proto updateLiveVars');
+			// console.dir(this);
 
 			if(this.internal.asdfReturnFunc.asdfType == 'asdfPrimitive'){
-				console.log('updateLiveVars asdfPrimitive');
+				// console.log('updateLiveVars asdfPrimitive');
 			}
 
 			if(this.internal.asdfReturnFunc.asdfType == 'asdfFunction'){
@@ -165,7 +165,7 @@ define([
 			if(dataValType == 'Function'){
 				console.log('dataValType is function!');
 				tempFunc.asdfType = 'asdfFunction';
-				this.initAsdfFunction();
+				// this.initAsdfFunction();
 			};
 
 			if(dataValType == 'Array'){
@@ -267,5 +267,5 @@ define([
 			return tempArr;
 		}
 
-		return ns;
+		return lpo;
 });
