@@ -173,6 +173,7 @@ function ListItem(data){
 a.liveVar('list', new List(data));
 
 // d.list is where the list will be placed in the dom
+// d.add is scoped to the d.list.
 d.list = {
 	template: a.someTemplateName, // what template will be used for content in d.list
 	data: a.list, // data to use in rendering of template 
@@ -181,17 +182,35 @@ d.list = {
 		template: t.list_item,
 		insert: d.list_items
 	},
-	onClick: {
-		add: 
-	}
+	something: d.add.onClick
 };
+
+d.list.prototype.something = function(ev){
+
+}
 
 d.list_item = {
 	template: self.template,
 	data: self // this could be implied.
+	updateCheck: d.checkbox1.onchange
 };
 
- = d.list.onClick;
+//
+
+
+// creates the function...
+d.list_item.prototype.updateCheck = function(ev){
+
+}
+
+// triggers and updates the function...
+d.list_item.updateCheck = d.checkbox_1.onchange;
+
+a.list.onClick = function(ev){
+	//update a.list in some special way...
+}
+
+a.list = d.list.onClick;
 
 
 
@@ -203,7 +222,7 @@ d.list_item = {
 
 <script id="list_item" type="text/asdf-template">
     <span>${text}</span>
-    <input type="checkbox" value="${isChecked}"><>
+    <input class="checkbox_1" type="checkbox" value="${isChecked}"><>
 </script>
 
 // template for listItem.....
