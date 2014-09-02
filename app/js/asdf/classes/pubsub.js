@@ -9,18 +9,18 @@ define(['lodash'], function (_){
 		if(callback){ callback(); };
 	};
 
-	ns.publish = function(topicName){
-		// console.log('publish!', topicName);
+	ns.publish = function(topicName, passedArgsArray){
+		console.log('publish!', topicName);
 		var subscribers = topics[topicName];
 
-		// console.dir(subscribers);
+		console.dir(subscribers);
 
 		// which is faster here? for loop, forEach, or lodash .each?
 		// test using console timer. 
 		if(topics[topicName]){
 			topics[topicName].forEach(function (v, i, arr){
 
-				subscribers[i].functionToCall();
+				subscribers[i].functionToCall(passedArgsArray);
 			});
 		}
 	};

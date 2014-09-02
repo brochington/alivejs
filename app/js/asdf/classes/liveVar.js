@@ -39,7 +39,7 @@ define([
 						}
 					},
 					set: function(val){
-						// console.log('liveVAR SET', Varname);
+						console.log('liveVAR SET', Varname);
 						liveVarValues[Varname].value = val;
 					}
 				});
@@ -81,8 +81,8 @@ define([
 					return self.internal.asdfReturnFunc;
 				},
 				set: function(val){
-					// console.log("value set", this);
-					// console.dir(val);
+					console.log("value set", this);
+					console.dir(val);
 
 					this.internal.tempSetVal = val;
 
@@ -92,7 +92,7 @@ define([
 
 					// handle type usecases here. 
 					if(valType == 'asdfPrimitive'){
-						// console.log('it is an asdfPrimitive.');
+						console.log('it is an asdfPrimitive.');
 						this.handleAsdfPrimitive();
 					};
 
@@ -102,10 +102,10 @@ define([
 					};
 
 					if(valType == 'String' || valType == 'Number' || valType == 'Boolean'){
-						// console.log('type1', self.internal.name, val);
+						console.log('type1', self.internal.name, val);
 
 						self.internal.value = val;
-						ps.publish(self.internal.name);
+						ps.publish(self.internal.name, [val]);
 
 						return;
 					};
@@ -115,12 +115,14 @@ define([
 			this.internal.asdfReturnFunc = this.createLiveVarFunction();
 		};
 
-		LiveVar.prototype.updateLiveVars = function(){
-			// console.log('proto updateLiveVars');
-			// console.dir(this);
+		LiveVar.prototype.updateLiveVars = function(argsArray){
+			console.log('proto updateLiveVars');
+			console.dir(this);
 
 			if(this.internal.asdfReturnFunc.asdfType == 'asdfPrimitive'){
 				// console.log('updateLiveVars asdfPrimitive');
+				console.log('argsArray', argsArray);
+				this.internal.value = argsArray[0];
 			}
 
 			if(this.internal.asdfReturnFunc.asdfType == 'asdfFunction'){

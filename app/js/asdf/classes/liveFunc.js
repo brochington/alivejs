@@ -2,18 +2,15 @@ define([
 	'asdf/classes/livePropertyObject'
 	], function (lpo){
 
-	console.log(lpo);
-
 	var liveFunctionValues = {};
 
 
 	lpo.liveFunc = function(funcName, initFunc, initArgs, initContext){
-		console.log('reached liveFunc');
 
 		Object.defineProperty(liveFunctionValues, funcName, {
 			value: new LiveFunc({
 				name: funcName,
-				value: initFunc,
+				liveFunc: initFunc,
 				initArgs: initArgs,
 				initContext: initContext
 			})
@@ -44,10 +41,10 @@ define([
 			name: data.name,
 			value: data.value, // this is the function that is being used.
 			initArgs: data.initArgs || null,
+			liveFunc: data.liveFunc,
 			initContext: data.initContext || window,
 			asdfWrapperFunc: null
 		};
-
 
 		Object.defineProperty(this, 'name', {
 			get: function(){
@@ -74,6 +71,11 @@ define([
 		this.internal.asdfWrapperFunc = this.createWrapperFunction();
 
 		console.log(this.internal.asdfWrapperFunc);
+
+		// evaluate the initFunc to get a starting value, then set it to the 
+		// internal.value prop.
+		this.internal.value = this.internal.liveFunc.apply(self.internal.initContext, self.internal.initArgs);
+
 	};
 
 	LiveFunc.prototype.createWrapperFunction = function(){

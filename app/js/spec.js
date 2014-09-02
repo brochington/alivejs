@@ -51,6 +51,7 @@ define([
 		        			a.testVar4().should.equal('test value 4');
 
 		        			a.testVar3 = a.testVar4;
+
 		        		});
 		        	});
 		        });
@@ -61,8 +62,9 @@ define([
 		        			a.liveVar('testVar6', 'test value 6');
 
 		        			a.testVar5 = a.testVar6;
-		        			a.testVar6 = "new test value";
+							a.testVar6 = "new test value";
 		        			a.testVar6().should.equal('new test value');
+		        			a.testVar5().should.equal('new test value');
 
 		        		});
 		        	});
