@@ -1,8 +1,10 @@
 define([
+	'asdf/classes/pubsub',
 	'asdf/classes/livePropertyObject'
-	], function (lpo){
+	], function (ps, lpo){
 
-	var liveFunctionValues = {};
+	var liveFunctionValues = {},
+		lpoi = lpo.__internal__;
 
 
 	lpo.liveFunc = function(funcName, initFunc, initArgs, initContext){
@@ -16,8 +18,6 @@ define([
 			})
 		});
 
-		console.log(liveFunctionValues);
-
 		if(!lpo[funcName]){
 			Object.defineProperty(lpo, funcName, {
 				get: function(){
@@ -27,7 +27,7 @@ define([
 					}
 				},
 				set: function(val){
-
+					// what will this be used for...
 				}
 			});
 		}
@@ -70,12 +70,28 @@ define([
 
 		this.internal.asdfWrapperFunc = this.createWrapperFunction();
 
-		console.log(this.internal.asdfWrapperFunc);
-
 		// evaluate the initFunc to get a starting value, then set it to the 
 		// internal.value prop.
+		lpoi.monitoringLiveThings = true;
 		this.internal.value = this.internal.liveFunc.apply(self.internal.initContext, self.internal.initArgs);
+		lpoi.monitoringLiveThings = false;
+		
+		// subscribe to all 
+		for (var i = 0; i < lpoi.monitoringLiveThingsArr.length; i++) {
+			var v = lpoi.monitoringLiveThingsArr[i];
 
+			ps.subscribe(v.internal.name, self.updateLiveFunc.bind(self));
+		};
+
+		lpoi.monitoringLiveThingsArr = [];
+
+	};
+
+	LiveFunc.prototype.updateLiveFunc = function(argsArray){
+		var self = this;
+		// reevaluate function...
+
+		this.internal.value = this.internal.liveFunc.apply(self.internal.initContext, self.internal.initArgs);
 	};
 
 	LiveFunc.prototype.createWrapperFunction = function(){

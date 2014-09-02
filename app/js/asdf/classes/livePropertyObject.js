@@ -1,5 +1,10 @@
 define([], function(){
-	var ns = {};
+	var ns = {
+		__internal__: {
+			monitoringLiveThings: false,
+			monitoringLiveThingsArr: []
+		}
+	};
 
 	return ns;
 });

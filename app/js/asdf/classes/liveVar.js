@@ -71,6 +71,10 @@ define([
 
 			Object.defineProperty(this, 'value', {
 				get: function(){
+					if(lpo.__internal__.monitoringLiveThings){
+						// console.log("bam....");
+						lpo.__internal__.monitoringLiveThingsArr.push(self);
+					};
 					
 					// if monitorLiveVar flag is set, add ref to that liveVar in arr.
 					if(monitorLiveVars){
@@ -92,17 +96,17 @@ define([
 
 					// handle type usecases here. 
 					if(valType == 'asdfPrimitive'){
-						console.log('it is an asdfPrimitive.');
+						// console.log('it is an asdfPrimitive.');
 						this.handleAsdfPrimitive();
 					};
 
 					if(valType == 'asdfFunction'){
-						console.log('val is asdf function');
+						// console.log('val is asdf function');
 						this.handleAsdfFunction();
 					};
 
 					if(valType == 'String' || valType == 'Number' || valType == 'Boolean'){
-						console.log('type1', self.internal.name, val);
+						// console.log('type1', self.internal.name, val);
 
 						self.internal.value = val;
 						ps.publish(self.internal.name, [val]);
@@ -232,7 +236,7 @@ define([
 			var val = this.internal.tempSetVal;
 
 			this.internal.value = val.asdfHome.internal.value;
-			
+			console.log(val.asdfHome.internal.name);
 			ps.subscribe(val.asdfHome.internal.name, this.updateLiveVars.bind(this));
 		};
 

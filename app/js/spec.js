@@ -110,6 +110,23 @@ define([
 						});
 					});
 				});
+				describe('trigger get of liveVars within liveFunc', function () {
+					describe('', function () {
+						it('liveFunc creation triggers get of liveVars', function () {
+
+							a.liveVar('testVar8', 1);
+							a.liveVar('testVar9', 2);
+
+							a.liveFunc('liveFunction3', function(){
+								return a.testVar8() + a.testVar9();
+							});
+
+							a.testVar9 = 20;
+							a.liveFunction3().should.equal(21);
+
+						});
+					});
+				});
 			});
 		}
 	};
