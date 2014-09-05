@@ -10,10 +10,10 @@ define(['lodash'], function (_){
 	};
 
 	ns.publish = function(topicName, passedArgsArray){
-		console.log('publish!', topicName);
+		// console.log('publish!', topicName);
 		var subscribers = topics[topicName];
 
-		console.dir(subscribers);
+		// console.dir(subscribers);
 
 		// which is faster here? for loop, forEach, or lodash .each?
 		// test using console timer. 

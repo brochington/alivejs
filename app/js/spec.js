@@ -10,7 +10,30 @@ define([
 			'use strict';
 
 			// Setup global variables for tests
-			var a = asdf.livePropertyObject;
+			var a = asdf.livePropertyObject,
+				d = asdf.Dom,
+				t = asdf.Template;
+
+			//test classes
+			function List(data){
+				console.log('creating a list');
+				var self = this;
+
+				this.someClass = data.someClass;
+
+				this.listItems = [];
+
+				data.listItems.forEach(function (v, i, arr){
+					self.listItems.push(new ListItem(v));
+				});
+			};
+
+			function ListItem(data){
+				var self = this;
+
+				this.text = data.text || null;
+				this.isChecked = data.isChecked || false;
+			};
 
 		    describe('ASDF Dom properties', function () {
 		        describe('creation of dom properties', function () {
@@ -123,8 +146,41 @@ define([
 
 							a.testVar9 = 20;
 							a.liveFunction3().should.equal(21);
-
 						});
+					});
+				});
+			});
+			describe('framework structure experiments', function () {
+				describe('stuff', function () {
+					it('more stuff', function(){
+						var listData = {
+							someClass: ['my-first-class', 'my-second-class'],
+							listItems: [
+								{text: 'this is some text', isChecked: true},
+								{text: 'here is some more text', isChecked: true}
+							]
+						};
+
+						// creation of a.list
+						a.liveVar('list', new List(listData));
+
+						a.liveFunc('listFunc', function(){
+							return 'this is a listFunc';
+						});
+
+						console.log(a.list());
+
+						d.list = {
+							template: t.t_list,
+							data: a.list
+						};
+
+						// a.list;
+
+						// d.list = {
+						// 	data: a.listFunc
+						// }
+
 					});
 				});
 			});

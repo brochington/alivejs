@@ -12,7 +12,7 @@ define([
 
 	var asdf = {};
 
-	console.log(LivePropObj);
+	// console.log(LivePropObj);
 
 	asdf.livePropertyObject = LivePropObj;
 	asdf.Template = tpl;

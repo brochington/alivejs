@@ -39,7 +39,7 @@ define([
 						}
 					},
 					set: function(val){
-						console.log('liveVAR SET', Varname);
+						// console.log('liveVAR SET', Varname);
 						liveVarValues[Varname].value = val;
 					}
 				});
@@ -71,6 +71,7 @@ define([
 
 			Object.defineProperty(this, 'value', {
 				get: function(){
+					// console.log('value get...');
 					if(lpo.__internal__.monitoringLiveThings){
 						// console.log("bam....");
 						lpo.__internal__.monitoringLiveThingsArr.push(self);
@@ -85,7 +86,7 @@ define([
 					return self.internal.asdfReturnFunc;
 				},
 				set: function(val){
-					console.log("value set", this);
+					// console.log("value set", this);
 					console.dir(val);
 
 					this.internal.tempSetVal = val;
@@ -120,12 +121,10 @@ define([
 		};
 
 		LiveVar.prototype.updateLiveVars = function(argsArray){
-			console.log('proto updateLiveVars');
-			console.dir(this);
 
 			if(this.internal.asdfReturnFunc.asdfType == 'asdfPrimitive'){
 				// console.log('updateLiveVars asdfPrimitive');
-				console.log('argsArray', argsArray);
+				// console.log('argsArray', argsArray);
 				this.internal.value = argsArray[0];
 			}
 
@@ -136,12 +135,12 @@ define([
 		};
 
 		LiveVar.prototype.updateAsdfFunction = function(){
-			console.log('updateAsdfFunction');
+			// console.log('updateAsdfFunction');
 			var argArr = getArgArr(this.internal.initArgVals);
 
-			console.log(argArr);
-			console.log(this);
-			console.log(this.internal.internalFunc);
+			// console.log(argArr);
+			// console.log(this);
+			// console.log(this.internal.internalFunc);
 
 			this.internal.value = this.internal.internalFunc.apply(this, argArr);
 
@@ -154,12 +153,18 @@ define([
 			var tempFunc = new Function(),
 				self = this,
 				tempVal = null,
-				dataValType = determineType(this.internal.value);
+				dataValType = determineType(this.internal.value),
+				tempKeyArr = [];
 
 			// this is the magic function!
 			tempFunc = function(){
 				return self.internal.value;
-			};	
+			};
+
+			tempFunc.internal = {
+				propValues: null,
+				asdfHome: self
+			}
 
 			//setup the properties on the function that will be passed around.
 			if(dataValType == 'String' || dataValType == 'Number' || dataValType == 'Boolean'){
@@ -169,19 +174,44 @@ define([
 
 			// If value is a function, 
 			if(dataValType == 'Function'){
-				console.log('dataValType is function!');
+				// console.log('dataValType is function!');
 				tempFunc.asdfType = 'asdfFunction';
 				// this.initAsdfFunction();
 			};
 
 			if(dataValType == 'Array'){
-				console.log('dataValType is Array');
+				// console.log('dataValType is Array');
 				tempFunc.asdfType = 'asdfArray';
 			};
 
 			if(dataValType == 'Object'){
 				// console.log('dataValType is Object');
 				tempFunc.asdfType = 'asdfObject';
+
+				console.log('Going to add some properties!!!!!!!!!!!!!!!');
+
+				for(var key in this.internal.value){
+					// console.log('key is: ', key);
+					tempKeyArr.push(key);
+				}
+
+				tempKeyArr.forEach(function (v, i, arr){
+					Object.defineProperty(tempFunc, v, {
+						get: function(){
+							// console.log(this.tempFunc[key]);
+							return this.asdfHome.internal.value[v];
+							// return this.internal.value[v];
+						},
+						set: function(val){
+							console.log('setting....', v, this.asdfHome.internal.name);
+							this.asdfHome.internal.value[v] = val;
+							ps.publish(this.asdfHome.internal.name);
+						}
+					})
+				});
+
+				tempKeyArr = [];
+				
 			};
 
 			// set reference to Home of liveVar.
@@ -236,7 +266,7 @@ define([
 			var val = this.internal.tempSetVal;
 
 			this.internal.value = val.asdfHome.internal.value;
-			console.log(val.asdfHome.internal.name);
+			// console.log(val.asdfHome.internal.name);
 			ps.subscribe(val.asdfHome.internal.name, this.updateLiveVars.bind(this));
 		};
 

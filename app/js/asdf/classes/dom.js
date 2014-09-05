@@ -3,8 +3,9 @@ define([
 	'vendor/lazy',
 	'asdf/classes/utility',
 	'asdf/classes/template',
+	'asdf/classes/pubsub',
 	'asdf/classes/bindings'
-	], function (_, Lazy, utils, tpl, bindings){
+	], function (_, Lazy, utils, tpl, ps, bindings){
 
 	var ns = {
 			playgroundNodeList: null, // holds the playground NodeList.
@@ -38,9 +39,13 @@ define([
 
 			Object.defineProperty(self, v, {
 				get: function(){
+					console.log('getting dom');
+
 					return self.__internal__.computedStyles[v];
 				},
 				set: function(val){
+
+					console.log('setting dom');
 
 					var varType = utils.determineType(val);
 
@@ -173,7 +178,7 @@ define([
 		// create properties on the main node for each style property.
 		
 		// console.timeEnd('secondTime');
-	}
+	};
 	// set the prototype of the DomObjArray so that it can access array methods.
 	DomObjArray.prototype = new Array();
 
@@ -183,7 +188,7 @@ define([
 		this.push(domNode);
 
 		this.__internal__.DomObjArr.push(new DomObj(domNode));
-	}
+	};
 
 	DomObjArray.prototype.updateStyleProp = function(propName, val){
 		// console.log('updating: ', propName, val, this);
@@ -191,13 +196,60 @@ define([
 		for(var i = 0, l = this.__internal__.DomObjArr.length; i<l;i++){
 			var domObj = this.__internal__.DomObjArr[i];
 				
-				if(propName !== 'length'){
-					domObj.updateStyle({
-						style: propName, 
-						value: val
+			if(propName !== 'length'){
+				domObj.updateStyle({
+					style: propName, 
+					value: val
+					}
+				);	
+			}
+		}
+	};
+
+	DomObjArray.prototype.setDomObjConfig = function(configObj){
+		// console.log('reached setDomObjConfig', configObj);
+
+		for(var prop in configObj){
+			// console.log('prop: ', prop);
+			this.setDomObjConfigHandlers[prop].call(this, configObj);
+		}
+	};
+
+	DomObjArray.prototype.setDomObjConfigHandlers = {
+		data: function(configObj){
+			// data can (should?) be a liveVar/liveFunc
+			// console.log('something data here.', configObj);
+
+			if(configObj.data && configObj.data.asdfType){
+				
+			}
+		},
+		template: function(configObj){
+			var template = configObj.template;
+			// takes a asdf template (i.e t.list)
+			console.log('template....');
+			console.dir(configObj.template.originalDomNode);
+
+			if(template && template.asdfType == 'asdfTemplate'){
+				console.log('it is a template!');
+				console.log(template);
+
+				if(configObj.data && configObj.data.asdfType){
+					console.log('gonna subscribe........');
+					console.dir(configObj.data);
+
+					for(var key in configObj.data.asdfHome.internal.value){
+						console.log('key: ', key);
+						if(template.insertionPoints[key]){
+							template.insertionPoints[key].updateIPValue(configObj.data.asdfHome.internal.value[key]);	
 						}
-					);	
+					}
+					
+					ps.subscribe(configObj.data.asdfHome.internal.name, template.updateData.bind(template, configObj.data));
 				}
+			};
+
+			
 		}
 	}
 
@@ -205,7 +257,7 @@ define([
 	function DomStyleObj(styleName){
 		
 		this.styleName = styleName;
-	}
+	};
 
 	function getStyleName(styleName){
 		console.log(styleName);
@@ -218,7 +270,7 @@ define([
 		this.domNode = domNode;
 
 		this.fillDomNodeCacheArr(domNode);
-	}
+	};
 
 	Playground.prototype.fillDomNodeCacheArr = function(domNode){
 
@@ -261,7 +313,8 @@ define([
 	}
 
 	Playground.prototype.defineDomNodeAsProp = function(domNode, propName){
-		// console.log(domNode);
+		var self = this;
+
 		Object.defineProperty(domNodeCacheObj, propName, {
 			value: domNode
 		});
@@ -272,10 +325,14 @@ define([
 
 		Object.defineProperty(ns, propName, {
 			get: function(){
+				// console.log('get domNodeArray');
 				return domObjects[propName];
 			},
 			set: function(val){
-
+				console.log(propName);
+				// console.log(this);
+				console.log('set domNodeArray');
+				domObjects[propName].setDomObjConfig(val);
 			}
 		});
 		// set an array value in the newly created DomObjArray as part of

@@ -21,7 +21,7 @@ define([
 		if(!lpo[funcName]){
 			Object.defineProperty(lpo, funcName, {
 				get: function(){
-					console.log('getting from liveFunc');
+					// console.log('getting from liveFunc');
 					if(liveFunctionValues[funcName]){
 						return liveFunctionValues[funcName].value;
 					}
@@ -48,22 +48,22 @@ define([
 
 		Object.defineProperty(this, 'name', {
 			get: function(){
-				console.log('getting name');
+				// console.log('getting name');
 			},
 			set: function(val){	
-				console.log('setting name: ');
+				// console.log('setting name: ');
 				console.dir(val);
 			}
 		});
 
 		Object.defineProperty(this, 'value', {
 			get: function(){
-				console.log('getting value');
+				// console.log('getting value');
 
 				return self.internal.asdfWrapperFunc;
 			},
 			set: function(val){
-				console.log('setting value');
+				// console.log('setting value');
 				console.dir(val);
 			}
 		});
@@ -101,6 +101,9 @@ define([
 		wrapperFunc = function(){
 			return self.internal.value;
 		};
+
+		wrapperFunc.asdfHome = self;
+		wrapperFunc.asdfType = 'asdfLiveFunction';
 
 		return wrapperFunc;
 	}
