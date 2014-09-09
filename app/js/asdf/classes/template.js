@@ -1,17 +1,13 @@
 define([
 	'lodash'
 	], function (_){
-
-	// _.templateSettings.interpolate = /${([\s\S]+?)}/g;
-
+		console.log('in template');
 
 	var ns,
 			ipRegEx = /\$\{(\w+)\}/g;
-			// ipRegEx = /\$\{+(\w)\}/mg;
+			ipSimpleRegEx = /\$\{(\w+)\}/;
 
-		// ipRegEx = /\$\{+\}/mg;
-
-	// constructor for Templates
+	// constructor for Templates, which is a collection of Template objects.
 	function Templates(){
 		var self = this;
 
@@ -19,10 +15,9 @@ define([
 			// tplNodeList: document.querySelectorAll('script[type="text/asdf-template"]'),
 			tplNodeList: document.querySelectorAll('[data-template]'),
 			tplNodeArr: [],
+			tplKeys:[],
 			templates: {}
 		};
-
-		console.log('tplNodeList', this.__internal__.tplNodeList);
 		
 		for(var i = 0; i < this.__internal__.tplNodeList.length; i++){
 			var node = this.__internal__.tplNodeList[i];
@@ -33,110 +28,156 @@ define([
 
 			// populate internal templates object, that will serve as the target for
 			// getters/setters on the main Templates object. 
-			Object.defineProperty(this.__internal__.templates, node.id, {
+			Object.defineProperty(this.__internal__.templates, node.attributes['data-template'].value, {
 				value: new Template(node)
 			});
 		};
 
 		// define properties on main Templates Object for each of the templates.
 		this.__internal__.tplNodeArr.forEach(function(v, i, arr){
-			console.log(v.id);
-			Object.defineProperty(self, v.id, {
+
+			self.__internal__.tplKeys.push(v.attributes['data-template'].value);
+
+			Object.defineProperty(self, v.attributes['data-template'].value, {
 				get: function(){
-					console.log('getting tpl');
-					return self.__internal__.templates[v.id];
+					return self.__internal__.templates[v.attributes['data-template'].value];
 				},
 				set: function(val){
-					console.log('setting tpl: ', val);
+
 				}
 			})	
 		});
 
 	};
 
+	Templates.prototype.getTemplateKeys = function(){
+		var keysArr = [];
+		for(var key in this.__internal__.templates){
+			keysArr.push(key);
+		}
+
+		return keysArr;
+	}
+
 	// constructor for Template
 	function Template(node){
+		var self = this,
+			nodeClone = node.cloneNode(true);
 
-		console.dir(node);
-		this.id = node.id;
+		// NOTE: removing the data-template attr, but it might
+		//       be better to just use the contents instead.
+		nodeClone.removeAttribute('data-template');
+
+		this.id = node.attributes['data-template'].value; 
 		this.originalDomNode = node;
+
+		this.templateDomNodeClone = nodeClone;
 		this.asdfType = 'asdfTemplate';
 
 		this.insertionPoints = {};
 
-		this.processInsertionPoints(node);
+		this.processInsertionPoints(self.templateDomNodeClone);
+
+		this.changesArr = [];
 	};
 
 	// what is the best way to process the insertion points, and 
 	// child nodes?
 	Template.prototype.processInsertionPoints = function(node){
-		console.log('called');
 		var self = this;
 		// detect if insertion points are being used in various parts
 		// of the node, like classNames, attributes, innerText, etc.
 		
-		console.time('cn');
 		for(var i = 0, l = node.childNodes.length; i < l; i++){
 			var cn = node.childNodes[i];
 
 			// text child nodes
 			if(cn.nodeName == '#text' && cn.data.indexOf('${') >= 0){
-				console.log('text node has insertionPoint');
 				this.insertionPointHandlers['innerText'].call(this, cn);
 			};
 			// classNames on nodes
 			if(cn.classList && cn.classList.length > 0){
 				this.insertionPointHandlers['className'].call(this, cn);
 			};
-
 		}
-		console.timeEnd('cn');
-		console.log(this);
 
+		if(node.children.length > 0){
+			for(var i = 0,l=node.children.length;i<l;i++){
+				this.processInsertionPoints(node.children[i]);
+			}
+		}
 	};
 
 	Template.prototype.insertionPointHandlers = {
 		innerText: function(node){
-			console.log('reached innerText insertionPointHandler');
-			console.log(this);
-			console.dir(node);
-
-			// parse the nodeValue of the node.
 			var ipNamesArr = getIPNamesFromStr(node.nodeValue);
 
 			for (var i = 0; i < ipNamesArr.length; i++) {
 				this.insertionPoints[ipNamesArr[i]] = new InsertionPoint({
 					id: ipNamesArr[i],
+					idLength : ipNamesArr[i].length,
+					originalIP : '${' + ipNamesArr[i] + '}',
 					location: 'innerText',
 					index: '',
 					node: node,
+					template: this,
+					previousIPValue: null,
+					start: null,
+					end: null,
 					updateIPValueCallback: function(val){
-						console.log('reached updateIPValueCallback', val);
-					}
+						var self = this,
+							strToReplace = this.previousIPValue ? this.previousIPValue : this.originalIP;
 
+						this.node.nodeValue = this.node.nodeValue.replace(strToReplace, val);
+						this.previousIPValue = val;
+					}
 				})
 			};
 		},
 		className: function(node){
 			var cl = node.classList;
-			console.log('reached className insertionPointHandler');
+
 			for(var j = 0, len = cl.length; j < len; j++){
-				if(ipRegEx.test(cl[j])){
+				var regExtest = ipSimpleRegEx.test(cl[j]);
+
+				if(regExtest){
 					var ipName = cl[j].slice(2, cl[j].lastIndexOf('}'));
 					this.insertionPoints[ipName] = new InsertionPoint({
 						id: ipName,
 						location: 'className',
 						node: node,
+						previousClassNames: [],
 						updateIPValueCallback: function(classArr){
-							console.log('reached updateIPValueCallback for className', classArr);
-							console.log(this);
-							// remove the insertionPoint, since we already have a reference to it's domnode
-							this.node.classList.remove('${' + this.id + '}');
-							var classStr = classArr.join(' ');
+							var self = this,
+								classNameStr = this.node.className,
+								newClassesStr = classArr.join(' '),
+								prevClassStr = this.previousClassNames.join(' ');
 
-							this.node.className =  (' ' + classStr);
+							classNameStr = removeIPfromStr(classNameStr,  this.id) + ' ';
 
-							console.log(classStr);
+
+
+							// remove all the classes from the previous class array.
+							for(var i = 0, l = this.previousClassNames.length; i <l; i++){
+								if(classNameStr.indexOf(this.previousClassNames[i]) >= 0){
+									classNameStr = classNameStr.split(this.previousClassNames[i]).join(' ');
+
+									if(classNameStr.indexOf(' ') == 0){
+										classNameStr = classNameStr.substr(1);
+									}
+								}
+							}
+
+							// add the new classes to the string with the previous classes omitted.
+							classNameStr += classArr.join(' '); 
+
+							// add the new class string to the dome node.
+							// TODO: className isn't being created correctly, adding a lot of extra 
+							// spaces to the class name.
+							this.node.className = classNameStr;
+
+							// make sure we save the previous class names.
+							this.previousClassNames = classArr;
 						}
 					});
 				}
@@ -144,11 +185,10 @@ define([
 		}
 	}
 
-	Template.prototype.updateData = function(data){
+	Template.prototype.updateData = function(data, domObjArr){
 		console.dir(data.asdfHome.internal.value);
 
 		if(data.asdfHome && data.asdfType == 'asdfObject'){
-			console.log('a liveVar that has an object in it...');
 			for(var key in data.asdfHome.internal.value){
 				if(this.insertionPoints[key]){
 					this.insertionPoints[key].updateIPValue(data.asdfHome.internal.value[key]);	
@@ -156,7 +196,16 @@ define([
 			}
 
 		}
-		
+
+		this.pushCloneToDom(domObjArr);
+	}
+
+	Template.prototype.pushCloneToDom = function(domObjArr){
+		var nodes = domObjArr.getDomNodes();
+
+		for (var i = 0; i < nodes.length; i++) {
+			nodes[i].appendChild(this.templateDomNodeClone);
+		};
 	}
 
 	// returns an array of insertionPoint names.
@@ -167,20 +216,24 @@ define([
 		});
 	}
 
-	function InsertionPoint(data){
-		this.id = data.id;
-		this.location = data.location;
-		this.node = data.node;
-		this.updateIPValueCallback = data.updateIPValueCallback;
+	// returns a string with the insertioPoint name removed.
+	function removeIPfromStr(str, ipName){
+		var newStr = str.split('${' + ipName + '}').join('');
 
-		if(data.index){
-			this.index = data.index
+		if(newStr.indexOf(' ') == 0){
+			newStr = newStr.substr(1);
+		}
+		return newStr;
+	}
+
+	function InsertionPoint(data){
+
+		for(var key in data){
+			this[key] = data[key];
 		}
 	}
 
 	InsertionPoint.prototype.updateIPValue = function(val){
-		console.log('updateIPValue ', val);
-		console.log(this);
 		this.updateIPValueCallback.call(this, val);
 	}
 

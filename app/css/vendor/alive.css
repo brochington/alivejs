@@ -1,0 +1,16 @@
+[data-template] {
+	display: none;
+}
+
+.test_div {
+	height: 40px;
+	width: 40px;
+	display:block;
+	margin-bottom: 5px;
+	background-color: #1C1225;
+	/*transition: all 0.4s linear;*/
+}
+
+.list {
+	transition: all 1s linear;
+}

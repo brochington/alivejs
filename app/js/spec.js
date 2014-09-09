@@ -16,10 +16,14 @@ define([
 
 			//test classes
 			function List(data){
-				console.log('creating a list');
 				var self = this;
 
 				this.someClass = data.someClass;
+				this.moreClasses = data.moreClasses;
+				this.testText = data.testText;
+				this.testTextAgain = data.testTextAgain;
+				this.something = 'something something.';
+				this.named = 'Brochington';
 
 				this.listItems = [];
 
@@ -123,7 +127,6 @@ define([
 						it('liveFunc returns proper value', function () {
 							a.liveFunc('liveFunction2', function(){
 								var internalValue = 1 + 2;
-								console.log("running test liveVarFunction2");
 
 								return internalValue;
 							});
@@ -155,6 +158,9 @@ define([
 					it('more stuff', function(){
 						var listData = {
 							someClass: ['my-first-class', 'my-second-class'],
+							moreClasses: ['another-class'],
+							testText: 'This is my first test text',
+							testTextAgain: 'This yet some more test text',
 							listItems: [
 								{text: 'this is some text', isChecked: true},
 								{text: 'here is some more text', isChecked: true}
@@ -168,19 +174,23 @@ define([
 							return 'this is a listFunc';
 						});
 
-						console.log(a.list());
-
 						d.list = {
-							template: t.t_list,
-							data: a.list
+							template: t.t_list_here,
+							data: a.list,
+							each: {
+								insert: d.list_items,
+							}
 						};
 
-						// a.list;
+						// each can be either a single object, or and array
+						// of object if there are more than one each loop.
 
-						// d.list = {
-						// 	data: a.listFunc
-						// }
+						d.list_items = {
+							template: t.t_list_item
+							// data: 'super'
+						}
 
+						a.list.something = 'hello there.';
 					});
 				});
 			});

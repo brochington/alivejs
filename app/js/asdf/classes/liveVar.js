@@ -87,7 +87,7 @@ define([
 				},
 				set: function(val){
 					// console.log("value set", this);
-					console.dir(val);
+					// console.dir(val);
 
 					this.internal.tempSetVal = val;
 
@@ -187,8 +187,6 @@ define([
 			if(dataValType == 'Object'){
 				// console.log('dataValType is Object');
 				tempFunc.asdfType = 'asdfObject';
-
-				console.log('Going to add some properties!!!!!!!!!!!!!!!');
 
 				for(var key in this.internal.value){
 					// console.log('key is: ', key);
