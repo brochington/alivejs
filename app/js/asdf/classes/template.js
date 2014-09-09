@@ -1,7 +1,6 @@
 define([
 	'lodash'
 	], function (_){
-		console.log('in template');
 
 	var ns,
 			ipRegEx = /\$\{(\w+)\}/g;
@@ -70,20 +69,88 @@ define([
 
 		this.id = node.attributes['data-template'].value; 
 		this.originalDomNode = node;
-
 		this.templateDomNodeClone = nodeClone;
 		this.asdfType = 'asdfTemplate';
-
 		this.insertionPoints = {};
+		this.changesArr = [];
+		this.instances = [];
+		this.instancesCounter = 0;
 
 		this.processInsertionPoints(self.templateDomNodeClone);
 
-		this.changesArr = [];
+	};
+
+	Template.prototype.createTplInstance = function(domObjArr){
+		var templateInstance = new TemplateInstance({
+			originTemplate: this,
+			id: this.instancesCounter++,
+			domObjArr: domObjArr
+		});
+
+		this.instances.push(templateInstance);
+
+		return templateInstance;
 	};
 
 	// what is the best way to process the insertion points, and 
 	// child nodes?
 	Template.prototype.processInsertionPoints = function(node){
+		var self = this;
+		// detect if insertion points are being used in various parts
+		// of the node, like classNames, attributes, innerText, etc.
+		
+		for(var i = 0, l = node.childNodes.length; i < l; i++){
+			var cn = node.childNodes[i];
+
+			// text child nodes
+			if(cn.nodeName == '#text' && cn.data.indexOf('${') >= 0){
+				// this.insertionPointHandlers['innerText'].call(this, cn);
+			};
+			// classNames on nodes
+			if(cn.classList && cn.classList.length > 0){
+				// this.insertionPointHandlers['className'].call(this, cn);
+			};
+		}
+
+		if(node.children.length > 0){
+			for(var i = 0,l=node.children.length;i<l;i++){
+				this.processInsertionPoints(node.children[i]);
+			}
+		}
+	};
+
+	Template.prototype.updateData = function(data, domObjArr){
+		// console.dir(data.asdfHome.internal.value);
+
+		if(data.asdfHome && data.asdfType == 'asdfObject'){
+			for(var key in data.asdfHome.internal.value){
+				if(this.insertionPoints[key]){
+					this.insertionPoints[key].updateIPValue(data.asdfHome.internal.value[key]);	
+				}
+			}
+
+		}
+	}
+
+	// constructor function for Template Instance
+	function TemplateInstance(data){
+		var nodeClone = data.originTemplate.originalDomNode.cloneNode(true);
+
+		nodeClone.removeAttribute('data-template'); // make sure we can see it...
+
+		this.originTemplate = data.originTemplate;
+		this.id = data.id;
+		this.domObjArray = data.domObjArr;
+		this.instanceNodeClone = nodeClone;
+
+		this.insertionPoints = {};
+
+		this.processInsertionPoints(this.instanceNodeClone);
+
+		console.log(this.insertionPoints);
+	}
+
+	TemplateInstance.prototype.processInsertionPoints = function(node){
 		var self = this;
 		// detect if insertion points are being used in various parts
 		// of the node, like classNames, attributes, innerText, etc.
@@ -106,13 +173,13 @@ define([
 				this.processInsertionPoints(node.children[i]);
 			}
 		}
-	};
+	}
 
-	Template.prototype.insertionPointHandlers = {
+	TemplateInstance.prototype.insertionPointHandlers = {
 		innerText: function(node){
 			var ipNamesArr = getIPNamesFromStr(node.nodeValue);
 
-			for (var i = 0; i < ipNamesArr.length; i++) {
+			for(var i = 0; i < ipNamesArr.length; i++) {
 				this.insertionPoints[ipNamesArr[i]] = new InsertionPoint({
 					id: ipNamesArr[i],
 					idLength : ipNamesArr[i].length,
@@ -125,6 +192,7 @@ define([
 					start: null,
 					end: null,
 					updateIPValueCallback: function(val){
+						// console.log('updateIPValueCallback innerText');
 						var self = this,
 							strToReplace = this.previousIPValue ? this.previousIPValue : this.originalIP;
 
@@ -148,6 +216,8 @@ define([
 						node: node,
 						previousClassNames: [],
 						updateIPValueCallback: function(classArr){
+							console.log('updateIPValueCallback className');
+							console.log(classArr);
 							var self = this,
 								classNameStr = this.node.className,
 								newClassesStr = classArr.join(' '),
@@ -185,8 +255,10 @@ define([
 		}
 	}
 
-	Template.prototype.updateData = function(data, domObjArr){
-		console.dir(data.asdfHome.internal.value);
+	TemplateInstance.prototype.updateData = function(data, domObjArray){
+		console.log('updateData!!');
+		// console.log(data);
+		// console.log(domObjArray);
 
 		if(data.asdfHome && data.asdfType == 'asdfObject'){
 			for(var key in data.asdfHome.internal.value){
@@ -194,17 +266,18 @@ define([
 					this.insertionPoints[key].updateIPValue(data.asdfHome.internal.value[key]);	
 				}
 			}
-
 		}
 
-		this.pushCloneToDom(domObjArr);
+		this.pushNodeToDom();
 	}
 
-	Template.prototype.pushCloneToDom = function(domObjArr){
-		var nodes = domObjArr.getDomNodes();
+	TemplateInstance.prototype.pushNodeToDom = function(){
+		var nodes = this.domObjArray.getDomNodes();
 
 		for (var i = 0; i < nodes.length; i++) {
-			nodes[i].appendChild(this.templateDomNodeClone);
+			console.log(nodes[i]);
+			nodes[i].appendChild(this.instanceNodeClone);
+			// nodes[i].appendChild(this.templateDomNodeClone);
 		};
 	}
 
@@ -214,6 +287,10 @@ define([
 		return str.match(ipRegEx).map(function(ip){
 			return ip.slice(2, ip.lastIndexOf('}'));
 		});
+	}
+
+	function getRandomInt(min, max) {
+		return Math.floor(Math.random() * (max - min)) + min;
 	}
 
 	// returns a string with the insertioPoint name removed.
@@ -234,6 +311,8 @@ define([
 	}
 
 	InsertionPoint.prototype.updateIPValue = function(val){
+		// console.log('new updateIPValue 2', val);
+		// console.log(this.updateIPValueCallback);
 		this.updateIPValueCallback.call(this, val);
 	}
 

@@ -6,7 +6,6 @@ define([
 	'asdf/classes/pubsub',
 	'asdf/classes/bindings'
 	], function (_, Lazy, utils, tpl, ps, bindings){
-		console.log('in dom');
 
 	var ns = {
 			playgroundNodeList: null, // holds the playground NodeList.
@@ -175,7 +174,7 @@ define([
 		// this is where we can add more 'directives/bindings'.
 		// TODO: Figure out some way to allow users to add there own...
 		// maybe gather the ones added to the prototype?
-		console.log(this);
+		// console.log(this);
 		for(var prop in configObj){
 			//TODO: get rid of this, and do some proper checking.
 			if(prop !== 'template' && prop !== 'data' && prop !== 'each'){
@@ -187,7 +186,7 @@ define([
 	DomObjArray.prototype.setDomObjConfigHandlers = {
 		data: function(configObj){
 			// data can (should?) be a liveVar/liveFunc
-			console.dir(configObj.data);
+			
 
 			if(configObj.data && configObj.data.asdfType == 'asdfObject'){
 				for(var key in configObj.data){
@@ -196,29 +195,49 @@ define([
 			}
 		},
 		template: function(configObj){
+			console.log('template called!');
+			console.dir(configObj.data);
 			var template = configObj.template;
+			// Need to create a new instance of the template, so that you can
+			// directly access it later, and have multiple instances on a page
+			// at any given time.
 
+			
 			if(template && template.asdfType == 'asdfTemplate'){
+				// create a new instance of the template.
+				var tplInstance = template.createTplInstance(this);
+				console.log(tplInstance);
 
 				if(configObj.data && configObj.data.asdfType){
 					for(var key in configObj.data.asdfHome.internal.value){
-						if(template.insertionPoints[key]){
-							template.insertionPoints[key].updateIPValue(configObj.data.asdfHome.internal.value[key]);	
+						// if the key name matches an insertion point...
+						// var ip = tplInstance.insertionPoints[key];
+
+						if(tplInstance.insertionPoints[key]){
+							tplInstance.insertionPoints[key].updateIPValue(configObj.data.asdfHome.internal.value[key]);
 						}
 					}
-					
-					ps.subscribe(configObj.data.asdfHome.internal.name, template.updateData.bind(template, configObj.data, this));
+
+					ps.subscribe(configObj.data.asdfHome.internal.name, tplInstance.updateData.bind(tplInstance, configObj.data, this));
+				} else {
+					// higher level of data from a parent?
 				}
 
-				template.pushCloneToDom(this);
+				tplInstance.pushNodeToDom();
 			};
 		},
 		each: function(configObj){
 			console.log('reached the config directive');
 
-			if(configObj.data && configObj.data.asdfType == 'asdfObject'){
 
+			if(configObj.data){
+				if(configObj.data.asdfType == 'asdfObject'){
+
+				}
+			} else {
+				// see if there is some data in a higher level.
 			}
+
 		}
 	}
 
@@ -244,7 +263,6 @@ define([
 	Playground.prototype.fillDomNodeCacheArr = function(domNode, template){
 
 		if(domNode && domNode.children){
-			console.log(domNode.children);
 			for(var i = 0; i < domNode.children.length; i++){
 				var child = domNode.children[i];
 

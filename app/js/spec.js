@@ -26,10 +26,12 @@ define([
 				this.named = 'Brochington';
 
 				this.listItems = [];
+				if(data.listItems){
+					data.listItems.forEach(function (v, i, arr){
+						self.listItems.push(new ListItem(v));
+					});					
+				}
 
-				data.listItems.forEach(function (v, i, arr){
-					self.listItems.push(new ListItem(v));
-				});
 			};
 
 			function ListItem(data){
@@ -161,34 +163,50 @@ define([
 							moreClasses: ['another-class'],
 							testText: 'This is my first test text',
 							testTextAgain: 'This yet some more test text',
-							listItems: [
-								{text: 'this is some text', isChecked: true},
-								{text: 'here is some more text', isChecked: true}
-							]
+							listItems: [{
+								text: 'this is some text',
+								btnName: "button 1",
+								btnText: "button 1"
+							},{
+								text: 'here is some more text',
+								btnName: "button 2",
+								btnText: "button 2"
+							}]
 						};
 
-						// creation of a.list
-						a.liveVar('list', new List(listData));
+						var listData2 = {
+							testText: 'test Text 2',
+							testTextAgain: 'testTextAgain 2',
+							someClass: ['some-class-man'],
+							moreClasses: ['broccoli', 'hotness']
+						}
 
-						a.liveFunc('listFunc', function(){
-							return 'this is a listFunc';
-						});
+						// creation of a.list and a.list_2
+						a.liveVar('list', new List(listData));
+						a.liveVar('list_2', new List(listData2));
 
 						d.list = {
 							template: t.t_list_here,
 							data: a.list,
-							each: {
-								insert: d.list_items,
-							}
+							// each: {
+							// 	insert: d.list_items,
+							// }
+						};
+
+						d.list_2 = {
+							template: t.t_list_here,
+							data: a.list_2
 						};
 
 						// each can be either a single object, or and array
 						// of object if there are more than one each loop.
 
-						d.list_items = {
-							template: t.t_list_item
-							// data: 'super'
-						}
+						// d.list_items = {
+							// template: t.t_list_item
+							// sending a click event to btnClick binding
+							// the d.list_item_btn.click is scoped to d.list_items.
+							// btnClick: d.list_item_btn.click 
+						// }
 
 						a.list.something = 'hello there.';
 					});

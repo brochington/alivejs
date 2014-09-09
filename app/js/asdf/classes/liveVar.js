@@ -201,7 +201,7 @@ define([
 							// return this.internal.value[v];
 						},
 						set: function(val){
-							console.log('setting....', v, this.asdfHome.internal.name);
+							// console.log('setting....', v, this.asdfHome.internal.name);
 							this.asdfHome.internal.value[v] = val;
 							ps.publish(this.asdfHome.internal.name);
 						}
