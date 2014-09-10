@@ -161,6 +161,9 @@ define([
 
 		// cycle through the properties sent to the d.list object.
 		// need to make sure they are done in the right sequence...
+		if(configObj.parentData){
+			this.setDomObjConfigHandlers['parentData'].call(this, configObj);
+		}
 		if(configObj.template){
 			this.setDomObjConfigHandlers['template'].call(this, configObj);
 		}
@@ -177,7 +180,7 @@ define([
 		// console.log(this);
 		for(var prop in configObj){
 			//TODO: get rid of this, and do some proper checking.
-			if(prop !== 'template' && prop !== 'data' && prop !== 'each'){
+			if(prop !== 'template' && prop !== 'data' && prop !== 'each' && prop !== 'parentData'){
 				this.setDomObjConfigHandlers[prop].call(this, configObj);	
 			}
 		}
@@ -195,24 +198,16 @@ define([
 			}
 		},
 		template: function(configObj){
-			console.log('template called!');
-			console.dir(configObj.data);
 			var template = configObj.template;
-			// Need to create a new instance of the template, so that you can
-			// directly access it later, and have multiple instances on a page
-			// at any given time.
+			console.log(configObj);
 
-			
 			if(template && template.asdfType == 'asdfTemplate'){
 				// create a new instance of the template.
-				var tplInstance = template.createTplInstance(this);
-				console.log(tplInstance);
+				var tplInstance = template.createTplInstance(this, configObj);
 
-				if(configObj.data && configObj.data.asdfType){
+				if(configObj.data && configObj.data.asdfType == 'asdfObject'){
 					for(var key in configObj.data.asdfHome.internal.value){
 						// if the key name matches an insertion point...
-						// var ip = tplInstance.insertionPoints[key];
-
 						if(tplInstance.insertionPoints[key]){
 							tplInstance.insertionPoints[key].updateIPValue(configObj.data.asdfHome.internal.value[key]);
 						}
@@ -221,14 +216,29 @@ define([
 					ps.subscribe(configObj.data.asdfHome.internal.name, tplInstance.updateData.bind(tplInstance, configObj.data, this));
 				} else {
 					// higher level of data from a parent?
+					console.log('no data...');
+					console.log(configObj);
+					console.log(this.__internal__.template);
+					// for each instance of a template...
+					if(this.__internal__.template){
+						console.log('bam');
+						for(var i = 0, l = this.__internal__.template.instances.length; i<l;i++){
+							// console.log(this.__internal__.template.instances[i]);
+							var data = this.__internal__.template.instances[i].originalConfigObj.data;
+							if(data){
+								console.log(data);
+							}
+						}					
+					}
+
 				}
 
 				tplInstance.pushNodeToDom();
 			};
 		},
 		each: function(configObj){
-			console.log('reached the config directive');
-
+			console.log('reached the each directive');
+			console.log(configObj);
 
 			if(configObj.data){
 				if(configObj.data.asdfType == 'asdfObject'){
@@ -237,7 +247,13 @@ define([
 			} else {
 				// see if there is some data in a higher level.
 			}
-
+		},
+		// reached this point!!!
+		parentData: function(configObj){
+			console.log('reached parentData');
+			// configObj.data = this.__internal__.template.instances[i].originalConfigObj.data;
+			// console.log(configObj.data);
+			// console.log(this.__internal__.template);
 		}
 	}
 

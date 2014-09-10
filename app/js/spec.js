@@ -188,9 +188,9 @@ define([
 						d.list = {
 							template: t.t_list_here,
 							data: a.list,
-							// each: {
-							// 	insert: d.list_items,
-							// }
+							each: {
+								insert: d.list_items,
+							}
 						};
 
 						d.list_2 = {
@@ -201,12 +201,13 @@ define([
 						// each can be either a single object, or and array
 						// of object if there are more than one each loop.
 
-						// d.list_items = {
-							// template: t.t_list_item
+						d.list_items = {
+							template: t.t_list_item,
+							parentData: 'listItems'
 							// sending a click event to btnClick binding
 							// the d.list_item_btn.click is scoped to d.list_items.
 							// btnClick: d.list_item_btn.click 
-						// }
+						};
 
 						a.list.something = 'hello there.';
 					});

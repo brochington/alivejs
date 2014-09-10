@@ -43,7 +43,7 @@ define([
 						liveVarValues[Varname].value = val;
 					}
 				});
-			}				
+			}	
 		};
 		// liveVar class 
 		function LiveVar(data) {
@@ -71,7 +71,6 @@ define([
 
 			Object.defineProperty(this, 'value', {
 				get: function(){
-					// console.log('value get...');
 					if(lpo.__internal__.monitoringLiveThings){
 						// console.log("bam....");
 						lpo.__internal__.monitoringLiveThingsArr.push(self);

@@ -76,61 +76,20 @@ define([
 		this.instances = [];
 		this.instancesCounter = 0;
 
-		this.processInsertionPoints(self.templateDomNodeClone);
-
 	};
 
-	Template.prototype.createTplInstance = function(domObjArr){
+	Template.prototype.createTplInstance = function(domObjArr, configObj){
 		var templateInstance = new TemplateInstance({
 			originTemplate: this,
 			id: this.instancesCounter++,
-			domObjArr: domObjArr
+			domObjArr: domObjArr,
+			originalConfigObj: configObj
 		});
 
 		this.instances.push(templateInstance);
 
 		return templateInstance;
 	};
-
-	// what is the best way to process the insertion points, and 
-	// child nodes?
-	Template.prototype.processInsertionPoints = function(node){
-		var self = this;
-		// detect if insertion points are being used in various parts
-		// of the node, like classNames, attributes, innerText, etc.
-		
-		for(var i = 0, l = node.childNodes.length; i < l; i++){
-			var cn = node.childNodes[i];
-
-			// text child nodes
-			if(cn.nodeName == '#text' && cn.data.indexOf('${') >= 0){
-				// this.insertionPointHandlers['innerText'].call(this, cn);
-			};
-			// classNames on nodes
-			if(cn.classList && cn.classList.length > 0){
-				// this.insertionPointHandlers['className'].call(this, cn);
-			};
-		}
-
-		if(node.children.length > 0){
-			for(var i = 0,l=node.children.length;i<l;i++){
-				this.processInsertionPoints(node.children[i]);
-			}
-		}
-	};
-
-	Template.prototype.updateData = function(data, domObjArr){
-		// console.dir(data.asdfHome.internal.value);
-
-		if(data.asdfHome && data.asdfType == 'asdfObject'){
-			for(var key in data.asdfHome.internal.value){
-				if(this.insertionPoints[key]){
-					this.insertionPoints[key].updateIPValue(data.asdfHome.internal.value[key]);	
-				}
-			}
-
-		}
-	}
 
 	// constructor function for Template Instance
 	function TemplateInstance(data){
@@ -142,12 +101,10 @@ define([
 		this.id = data.id;
 		this.domObjArray = data.domObjArr;
 		this.instanceNodeClone = nodeClone;
-
 		this.insertionPoints = {};
+		this.originalConfigObj = data.originalConfigObj;
 
 		this.processInsertionPoints(this.instanceNodeClone);
-
-		console.log(this.insertionPoints);
 	}
 
 	TemplateInstance.prototype.processInsertionPoints = function(node){
@@ -192,7 +149,6 @@ define([
 					start: null,
 					end: null,
 					updateIPValueCallback: function(val){
-						// console.log('updateIPValueCallback innerText');
 						var self = this,
 							strToReplace = this.previousIPValue ? this.previousIPValue : this.originalIP;
 
@@ -216,8 +172,6 @@ define([
 						node: node,
 						previousClassNames: [],
 						updateIPValueCallback: function(classArr){
-							console.log('updateIPValueCallback className');
-							console.log(classArr);
 							var self = this,
 								classNameStr = this.node.className,
 								newClassesStr = classArr.join(' '),
@@ -256,10 +210,6 @@ define([
 	}
 
 	TemplateInstance.prototype.updateData = function(data, domObjArray){
-		console.log('updateData!!');
-		// console.log(data);
-		// console.log(domObjArray);
-
 		if(data.asdfHome && data.asdfType == 'asdfObject'){
 			for(var key in data.asdfHome.internal.value){
 				if(this.insertionPoints[key]){
@@ -267,7 +217,6 @@ define([
 				}
 			}
 		}
-
 		this.pushNodeToDom();
 	}
 
@@ -275,9 +224,7 @@ define([
 		var nodes = this.domObjArray.getDomNodes();
 
 		for (var i = 0; i < nodes.length; i++) {
-			console.log(nodes[i]);
 			nodes[i].appendChild(this.instanceNodeClone);
-			// nodes[i].appendChild(this.templateDomNodeClone);
 		};
 	}
 
@@ -311,8 +258,6 @@ define([
 	}
 
 	InsertionPoint.prototype.updateIPValue = function(val){
-		// console.log('new updateIPValue 2', val);
-		// console.log(this.updateIPValueCallback);
 		this.updateIPValueCallback.call(this, val);
 	}
 
