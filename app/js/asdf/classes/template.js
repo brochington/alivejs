@@ -78,12 +78,13 @@ define([
 
 	};
 
-	Template.prototype.createTplInstance = function(domObjArr, configObj){
+	Template.prototype.createTplInstance = function(domObjArr, configObj, type){
 		var templateInstance = new TemplateInstance({
 			originTemplate: this,
 			id: this.instancesCounter++,
 			domObjArr: domObjArr,
-			originalConfigObj: configObj
+			originalConfigObj: configObj,
+			type: type
 		});
 
 		this.instances.push(templateInstance);
@@ -102,7 +103,10 @@ define([
 		this.domObjArray = data.domObjArr;
 		this.instanceNodeClone = nodeClone;
 		this.insertionPoints = {};
+		this.domInsertPoint = null;
+		this.attrToUse = null;
 		this.originalConfigObj = data.originalConfigObj;
+		this.type = data.type;
 
 		this.processInsertionPoints(this.instanceNodeClone);
 	}
@@ -210,6 +214,9 @@ define([
 	}
 
 	TemplateInstance.prototype.updateData = function(data, domObjArray){
+		console.log('updateData', domObjArray);
+		console.log(this);
+		console.log(data);
 		if(data.asdfHome && data.asdfType == 'asdfObject'){
 			for(var key in data.asdfHome.internal.value){
 				if(this.insertionPoints[key]){
@@ -217,7 +224,21 @@ define([
 				}
 			}
 		}
-		this.pushNodeToDom();
+		if(this.type == 'insert'){
+			for(var key in this.insertionPoints){
+				console.log(key);
+				// console.log(data.asdfHome.internal.value[this.attrToUse]);
+				console.log(this.attrToUse);
+
+				if(this.insertionPoints[key]){
+
+					// this.insertionPoints[key].updateIPValue(data.asdfHome.internal.value[this.attrToUse][key]);	
+				}
+			}
+			this.insertNodeToDom();	
+		} else {
+			this.pushNodeToDom();			
+		}	
 	}
 
 	TemplateInstance.prototype.pushNodeToDom = function(){
@@ -225,6 +246,18 @@ define([
 
 		for (var i = 0; i < nodes.length; i++) {
 			nodes[i].appendChild(this.instanceNodeClone);
+		};
+	}
+
+	TemplateInstance.prototype.insertNodeToDom = function(){
+		console.log('insertNodeToDom');
+		var nodes = this.domObjArray.getDomNodes();
+		console.log(nodes);
+		console.log(this);
+
+		for (var i = this.domInsertPoint.length - 1; i >= 0; i--) {
+			this.domInsertPoint[i].appendChild(this.instanceNodeClone);
+			// console.log(this.domInsertPoint[i].);
 		};
 	}
 

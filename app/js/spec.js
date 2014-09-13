@@ -38,7 +38,7 @@ define([
 				var self = this;
 
 				this.text = data.text || null;
-				this.isChecked = data.isChecked || false;
+				this.btnText = data.btnText;
 			};
 
 		    describe('ASDF Dom properties', function () {
@@ -174,6 +174,11 @@ define([
 							}]
 						};
 
+						// var moreListitems = [{
+						// 	text: 'broch',
+						// 	btnText: 'Broch'	
+						// }];
+
 						var listData2 = {
 							testText: 'test Text 2',
 							testTextAgain: 'testTextAgain 2',
@@ -209,7 +214,7 @@ define([
 							// btnClick: d.list_item_btn.click 
 						};
 
-						a.list.something = 'hello there.';
+						// a.list.listItems = moreListitems;
 					});
 				});
 			});

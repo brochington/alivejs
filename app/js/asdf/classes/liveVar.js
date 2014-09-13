@@ -71,6 +71,7 @@ define([
 
 			Object.defineProperty(this, 'value', {
 				get: function(){
+					// console.log('2');
 					if(lpo.__internal__.monitoringLiveThings){
 						// console.log("bam....");
 						lpo.__internal__.monitoringLiveThingsArr.push(self);

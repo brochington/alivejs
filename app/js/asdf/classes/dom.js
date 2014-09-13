@@ -92,14 +92,18 @@ define([
 	};
 
 	// An Array of Dom Objects, Used in handling of classes, and Id's.
-	function DomObjArray(data, template){
+	function DomObjArray(data, template, propName, propType){
 		var self = this,
 			testObj = {};
 
 
 		this.__internal__ = {
 			DomObjArr: [new DomObj(data)],
-			template: template || null
+			template: template || null,
+			templateInstance: null,
+			configObj: null,
+			propName: propName,
+			propType: propType
 		};
 
 		// add properties of the style names to the DomObjArray
@@ -156,8 +160,20 @@ define([
 		}
 	};
 
+	DomObjArray.prototype.updateAllDom = function(){
+		console.log('updateAllDom');
+	};
+
 	DomObjArray.prototype.setDomObjConfig = function(configObj){
-		// console.log('reached setDomObjConfig', configObj);
+		// set configObj 
+		this.__internal__.configObj = configObj || null;
+
+		// setting template used inside of domNode being targeted with DomObjArray.
+		if(configObj.template){
+			this.__internal__.template = configObj.template;
+			this.__internal__.templateInstance = configObj.template.createTplInstance(this, configObj);
+		};
+
 
 		// cycle through the properties sent to the d.list object.
 		// need to make sure they are done in the right sequence...
@@ -171,7 +187,6 @@ define([
 			this.setDomObjConfigHandlers['data'].call(this, configObj);
 		}
 		if(configObj.each){
-			console.log('we have an each!!!');
 			this.setDomObjConfigHandlers['each'].call(this, configObj);
 		}
 		// this is where we can add more 'directives/bindings'.
@@ -184,76 +199,86 @@ define([
 				this.setDomObjConfigHandlers[prop].call(this, configObj);	
 			}
 		}
+
+		// trigger adding of all Dom nodes to actual Dom
+		// this.updateAllDom();
+		this.__internal__.templateInstance.pushNodeToDom();
+
 	};
 
 	DomObjArray.prototype.setDomObjConfigHandlers = {
-		data: function(configObj){
+		data: function(){
 			// data can (should?) be a liveVar/liveFunc
-			
-
-			if(configObj.data && configObj.data.asdfType == 'asdfObject'){
-				for(var key in configObj.data){
-					// console.log(key);
-				}
-			}
 		},
-		template: function(configObj){
-			var template = configObj.template;
-			console.log(configObj);
+		template: function(){
+			var tpl = this.__internal__.template,
+				co = this.__internal__.configObj,
+				tpli = this.__internal__.templateInstance;
 
-			if(template && template.asdfType == 'asdfTemplate'){
-				// create a new instance of the template.
-				var tplInstance = template.createTplInstance(this, configObj);
-
-				if(configObj.data && configObj.data.asdfType == 'asdfObject'){
-					for(var key in configObj.data.asdfHome.internal.value){
+			if(tpl && tpl.asdfType == 'asdfTemplate'){
+				// console.log('template: ', this);
+				if(co.data && co.data.asdfType == 'asdfObject'){
+					for(var key in co.data.asdfHome.internal.value){
 						// if the key name matches an insertion point...
-						if(tplInstance.insertionPoints[key]){
-							tplInstance.insertionPoints[key].updateIPValue(configObj.data.asdfHome.internal.value[key]);
+						if(tpli.insertionPoints[key]){
+							tpli.insertionPoints[key].updateIPValue(co.data.asdfHome.internal.value[key]);
 						}
 					}
+					console.log(co.data.asdfHome.internal.name);
+					ps.subscribe(co.data.asdfHome.internal.name, tpli.updateData.bind(tpli, co.data, this));
+				} 
 
-					ps.subscribe(configObj.data.asdfHome.internal.name, tplInstance.updateData.bind(tplInstance, configObj.data, this));
-				} else {
-					// higher level of data from a parent?
-					console.log('no data...');
-					console.log(configObj);
-					console.log(this.__internal__.template);
-					// for each instance of a template...
-					if(this.__internal__.template){
-						console.log('bam');
-						for(var i = 0, l = this.__internal__.template.instances.length; i<l;i++){
-							// console.log(this.__internal__.template.instances[i]);
-							var data = this.__internal__.template.instances[i].originalConfigObj.data;
-							if(data){
-								console.log(data);
-							}
-						}					
-					}
-
-				}
-
-				tplInstance.pushNodeToDom();
+				// tpli.pushNodeToDom();
 			};
 		},
-		each: function(configObj){
-			console.log('reached the each directive');
-			console.log(configObj);
+		each: function(){
+			var co = this.__internal__.configObj;
 
-			if(configObj.data){
-				if(configObj.data.asdfType == 'asdfObject'){
-
+			if(co.data){
+				if(co.each.insert){
+					//subscribe to changes in the insert d.whatever.
+					ps.subscribe('DomObjArray_' + co.each.insert.__internal__.propName, this.processForEachInsert.bind(this));
 				}
-			} else {
-				// see if there is some data in a higher level.
 			}
 		},
-		// reached this point!!!
-		parentData: function(configObj){
-			console.log('reached parentData');
-			// configObj.data = this.__internal__.template.instances[i].originalConfigObj.data;
-			// console.log(configObj.data);
-			// console.log(this.__internal__.template);
+		parentData: function(){
+			//
+		},
+	}
+
+	DomObjArray.prototype.processForEachInsert = function(propName){
+		var self = this,
+			tempTpliArr = [],
+			cdoa = domObjects[propName],
+			co = this.__internal__.configObj,
+			destDom = null,
+			attrToUse = co.each.data || cdoa.__internal__.configObj.parentData,
+			clone = this.__internal__.templateInstance.instanceNodeClone;
+
+		console.log(this);
+		console.log(domObjects[propName]);
+
+		for(var i = 0, l = co.data[attrToUse].length; i<l;i++){
+			var tplInstance = cdoa.__internal__.template.createTplInstance(cdoa, cdoa.__internal__.configObj, 'insert');
+
+			destDom = null;
+
+			if(cdoa.__internal__.propType == 'class'){
+				console.log('processing as class');
+				destDom = clone.getElementsByClassName(propName);
+			}
+			
+			for(var key in cdoa.__internal__.templateInstance.insertionPoints){
+				console.log();
+				tplInstance.domInsertPoint = destDom;
+				tplInstance.attrToUse = attrToUse;
+				tplInstance.insertionPoints[key].updateIPValue(co.data[attrToUse][i][key]);
+				
+			}	
+			console.log(co.data.asdfHome.internal.name);
+			ps.subscribe(co.data.asdfHome.internal.name, tplInstance.updateData.bind(tplInstance, co.data[attrToUse], this));
+			tplInstance.insertNodeToDom();
+
 		}
 	}
 
@@ -277,7 +302,6 @@ define([
 	};
 
 	Playground.prototype.fillDomNodeCacheArr = function(domNode, template){
-
 		if(domNode && domNode.children){
 			for(var i = 0; i < domNode.children.length; i++){
 				var child = domNode.children[i];
@@ -294,7 +318,7 @@ define([
 
 	Playground.prototype.processDomNodeAsProp = function(domNode, template){
 		if(domNode.id && !ns.hasOwnProperty(domNode.id)){
-			this.defineDomNodeAsProp(domNode, domNode.id);
+			this.defineDomNodeAsProp(domNode, domNode.id, template, 'id');
 		}
 		if(domNode.classList.length > 0){
 			for(var i = 0, l = domNode.classList.length; i<l; i++){
@@ -307,14 +331,14 @@ define([
 					// add className to appropriate objects. 
 				
 				} else{
-					this.defineDomNodeAsProp(domNode, className, template);
+					this.defineDomNodeAsProp(domNode, className, template, 'class');
 				}
 
 			}
 		}
 	}
 
-	Playground.prototype.defineDomNodeAsProp = function(domNode, propName, template){
+	Playground.prototype.defineDomNodeAsProp = function(domNode, propName, template, propType){
 		var self = this;
 
 		Object.defineProperty(domNodeCacheObj, propName, {
@@ -322,7 +346,7 @@ define([
 		});
 
 		Object.defineProperty(domObjects, propName, {
-			value: new DomObjArray(domNode, template)
+			value: new DomObjArray(domNode, template, propName, propType)
 		});
 
 		Object.defineProperty(ns, propName, {
@@ -331,6 +355,9 @@ define([
 			},
 			set: function(val){
 				domObjects[propName].setDomObjConfig(val);
+				console.log(propName, val);
+				console.log('DomObjArray_' + propName);
+				ps.publish('DomObjArray_' + propName, [propName]);
 			}
 		});
 		// set an array value in the newly created DomObjArray as part of
